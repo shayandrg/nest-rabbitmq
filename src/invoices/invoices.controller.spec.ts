@@ -56,22 +56,22 @@ describe('InvoicesController', () => {
         ],
       };
 
-      jest.spyOn(service, 'create').mockResolvedValueOnce(mockInvoice as any);
+      const createSpy = jest.spyOn(service, 'create').mockResolvedValueOnce(mockInvoice as any);
 
       const result = await controller.create(createInvoiceDto);
 
-      expect(service.create).toHaveBeenCalledWith(createInvoiceDto);
+      expect(createSpy).toHaveBeenCalledWith(createInvoiceDto);
       expect(result).toEqual(mockInvoice);
     });
   });
 
   describe('findAll', () => {
     it('should return an array of invoices', async () => {
-      jest.spyOn(service, 'findAll').mockResolvedValueOnce([mockInvoice] as any);
+      const findAllSpy = jest.spyOn(service, 'findAll').mockResolvedValueOnce([mockInvoice] as any);
 
       const result = await controller.findAll();
 
-      expect(service.findAll).toHaveBeenCalled();
+      expect(findAllSpy).toHaveBeenCalled();
       expect(result).toEqual([mockInvoice]);
     });
 
@@ -79,22 +79,22 @@ describe('InvoicesController', () => {
       const startDate = '2023-01-01';
       const endDate = '2023-01-31';
       
-      jest.spyOn(service, 'findAll').mockResolvedValueOnce([mockInvoice] as any);
+      const findAllSpy = jest.spyOn(service, 'findAll').mockResolvedValueOnce([mockInvoice] as any);
 
       const result = await controller.findAll(startDate, endDate);
 
-      expect(service.findAll).toHaveBeenCalledWith(new Date(startDate), new Date(endDate));
+      expect(findAllSpy).toHaveBeenCalledWith(new Date(startDate), new Date(endDate));
       expect(result).toEqual([mockInvoice]);
     });
   });
 
   describe('findOne', () => {
     it('should return a single invoice', async () => {
-      jest.spyOn(service, 'findOne').mockResolvedValueOnce(mockInvoice as any);
+      const findOneSpy = jest.spyOn(service, 'findOne').mockResolvedValueOnce(mockInvoice as any);
 
       const result = await controller.findOne('some-id');
 
-      expect(service.findOne).toHaveBeenCalledWith('some-id');
+      expect(findOneSpy).toHaveBeenCalledWith('some-id');
       expect(result).toEqual(mockInvoice);
     });
   });

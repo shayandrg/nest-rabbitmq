@@ -23,7 +23,7 @@ export class InvoicesController {
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string): Promise<Invoice> {
+  async findOne(@Param('id') id: string): Promise<Invoice | null> {
     return this.invoicesService.findOne(id);
   }
 } 

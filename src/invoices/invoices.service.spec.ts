@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import { InvoicesService } from './invoices.service';
 import { Invoice } from './schemas/invoice.schema';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 
+// Mock invoice data
 const mockInvoice = {
   _id: 'some-id',
   customer: 'Test Customer',
@@ -17,33 +17,39 @@ const mockInvoice = {
   ],
 };
 
+// Mock implementation for Mongoose's Model class
+class InvoiceModelMock {
+  constructor(private data) {}
+  
+  save = jest.fn().mockResolvedValue(mockInvoice);
+  
+  static find = jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue([mockInvoice]),
+  });
+  
+  static findById = jest.fn().mockReturnValue({
+    exec: jest.fn().mockResolvedValue(mockInvoice),
+  });
+}
+
 describe('InvoicesService', () => {
   let service: InvoicesService;
-  let model: Model<Invoice>;
-
-  const mockInvoiceModel = {
-    new: jest.fn().mockResolvedValue(mockInvoice),
-    constructor: jest.fn().mockResolvedValue(mockInvoice),
-    find: jest.fn(),
-    findById: jest.fn(),
-    findOne: jest.fn(),
-    save: jest.fn(),
-    exec: jest.fn(),
-  };
 
   beforeEach(async () => {
+    // Clear all mock implementations
+    jest.clearAllMocks();
+    
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InvoicesService,
         {
           provide: getModelToken(Invoice.name),
-          useValue: mockInvoiceModel,
+          useValue: InvoiceModelMock,
         },
       ],
     }).compile();
 
     service = module.get<InvoicesService>(InvoicesService);
-    model = module.get<Model<Invoice>>(getModelToken(Invoice.name));
   });
 
   it('should be defined', () => {
@@ -61,8 +67,6 @@ describe('InvoicesService', () => {
           { sku: 'ITEM2', qt: 1 },
         ],
       };
-
-      jest.spyOn(model, 'save').mockResolvedValueOnce(mockInvoice as any);
       
       const result = await service.create(createInvoiceDto);
       
@@ -72,26 +76,22 @@ describe('InvoicesService', () => {
 
   describe('findAll', () => {
     it('should return an array of invoices', async () => {
-      jest.spyOn(model, 'find').mockReturnValue({
-        exec: jest.fn().mockResolvedValueOnce([mockInvoice]),
-      } as any);
+      const findSpy = jest.spyOn(InvoiceModelMock, 'find');
       
       const result = await service.findAll();
       
+      expect(findSpy).toHaveBeenCalledWith({});
       expect(result).toEqual([mockInvoice]);
     });
 
     it('should filter by date range when provided', async () => {
-      const startDate = new Date('2023-01-01');
-      const endDate = new Date('2023-01-31');
-      
-      jest.spyOn(model, 'find').mockReturnValue({
-        exec: jest.fn().mockResolvedValueOnce([mockInvoice]),
-      } as any);
+      const startDate = new Date('2025-05-01');
+      const endDate = new Date('2025-05-31');
+      const findSpy = jest.spyOn(InvoiceModelMock, 'find');
       
       const result = await service.findAll(startDate, endDate);
       
-      expect(model.find).toHaveBeenCalledWith({
+      expect(findSpy).toHaveBeenCalledWith({
         date: {
           $gte: startDate,
           $lte: endDate,
@@ -103,13 +103,11 @@ describe('InvoicesService', () => {
 
   describe('findOne', () => {
     it('should find and return an invoice by id', async () => {
-      jest.spyOn(model, 'findById').mockReturnValue({
-        exec: jest.fn().mockResolvedValueOnce(mockInvoice),
-      } as any);
+      const findByIdSpy = jest.spyOn(InvoiceModelMock, 'findById');
       
       const result = await service.findOne('some-id');
       
-      expect(model.findById).toHaveBeenCalledWith('some-id');
+      expect(findByIdSpy).toHaveBeenCalledWith('some-id');
       expect(result).toEqual(mockInvoice);
     });
   });

@@ -1,6 +1,6 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Transport, RmqContext, Ctx, Payload, RmqOptions, ClientProxy, ClientProxyFactory } from '@nestjs/microservices';
+import { EventPattern, Payload } from '@nestjs/microservices';
 import { EmailService } from './email.service';
 
 interface DailySalesReport {
@@ -13,48 +13,16 @@ interface DailySalesReport {
 }
 
 @Injectable()
-export class EmailConsumer implements OnModuleInit {
+export class EmailConsumer {
   private readonly logger = new Logger(EmailConsumer.name);
-  private client: ClientProxy;
 
   constructor(
     private readonly emailService: EmailService,
     private readonly configService: ConfigService,
   ) {}
 
-  onModuleInit() {
-    const options: RmqOptions = {
-      transport: Transport.RMQ,
-      options: {
-        urls: [this.configService.get<string>('RABBITMQ_URL') || 'amqp://localhost:5672'],
-        queue: 'daily_sales_report',
-        queueOptions: {
-          durable: true,
-        },
-        noAck: false,
-      },
-    };
-
-    this.client = ClientProxyFactory.create(options);
-
-    this.client.connect().then(() => {
-      this.logger.log('Connected to RabbitMQ');
-      
-      this.client
-        .createSubscriptionObservable('daily_sales_report', { noAck: false })
-        .subscribe({
-          next: ({ data, ack }: { data: any; ack: () => void }) => {
-            this.handleDailySalesReport(data);
-            ack();
-          },
-          error: (error) => {
-            this.logger.error('Subscription error', error);
-          },
-        });
-    });
-  }
-
-  private async handleDailySalesReport(@Payload() data: DailySalesReport, @Ctx() context?: RmqContext) {
+  @EventPattern('daily_sales_report')
+  async handleDailySalesReport(@Payload() data: DailySalesReport) {
     this.logger.log(`Received daily sales report for ${data.date}`);
     
     try {
@@ -84,7 +52,7 @@ export class EmailConsumer implements OnModuleInit {
           <th>SKU</th>
           <th>Total Quantity</th>
         </tr>
-        ${report.itemsSold.map(item => `
+        ${report.itemsSold.map((item) => `
           <tr>
             <td>${item.sku}</td>
             <td>${item.totalQuantity}</td>
@@ -101,7 +69,7 @@ export class EmailConsumer implements OnModuleInit {
       Total Sales: $${report.totalSales.toFixed(2)}
       
       Items Sold:
-      ${report.itemsSold.map(item => `SKU: ${item.sku}, Quantity: ${item.totalQuantity}`).join('\n')}
+      ${report.itemsSold.map((item) => `SKU: ${item.sku}, Quantity: ${item.totalQuantity}`).join('\n')}
     `;
   }
 } 

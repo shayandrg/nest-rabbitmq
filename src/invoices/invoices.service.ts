@@ -30,7 +30,7 @@ export class InvoicesService {
     return this.invoiceModel.find(query).exec();
   }
 
-  async findOne(id: string): Promise<Invoice> {
+  async findOne(id: string): Promise<Invoice | null> {
     return this.invoiceModel.findById(id).exec();
   }
 

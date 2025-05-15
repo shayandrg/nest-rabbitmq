@@ -1,15 +1,17 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm ci --only=production
+# Install dependencies
+RUN npm install
 
+# Copy project files
 COPY . .
 
+# Build application
 RUN npm run build
 
 EXPOSE 3000
-
-CMD ["node", "dist/main"] 
+EXPOSE 9229

@@ -1,49 +1,55 @@
-version: '3.8'
-
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: nestjs
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - MONGODB_URI=mongodb://mongodb:27017/invoice-system
-      - RABBITMQ_URL=amqp://rabbitmq:5672
-      - EMAIL_HOST=smtp.example.com
-      - EMAIL_PORT=587
-      - EMAIL_SECURE=false
-      - EMAIL_USER=user@example.com
-      - EMAIL_PASSWORD=password
-      - EMAIL_FROM=noreply@example.com
-      - REPORT_RECIPIENTS=admin@example.com
+      - "9229:9229"
+    env_file:
+      - .env
     depends_on:
-      - mongodb
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
+      mongodb:
+        condition: service_started
     volumes:
-      - ./src:/app/src
-      - ./test:/app/test
+      - ./:/app
+      - /app/node_modules
     command: npm run start:dev
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
 
   mongodb:
     image: mongo:latest
+    container_name: mongodb
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+    restart: unless-stopped
 
   rabbitmq:
     image: rabbitmq:3-management
+    container_name: rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
-    environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
+    env_file:
+      - .env
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   mongodb_data:
-  rabbitmq_data: 
+  rabbitmq_data:
+  node_modules: 

@@ -46,10 +46,8 @@ export class ReportsService {
   private createSalesReport(invoices: Invoice[], date: Date): DailySalesReport {
     const totalSales = invoices.reduce((sum, invoice) => sum + invoice.amount, 0);
     
-    // Create a map to track quantities by SKU
     const skuMap = new Map<string, number>();
     
-    // Process all items in all invoices
     invoices.forEach(invoice => {
       invoice.items.forEach(item => {
         const currentQt = skuMap.get(item.sku) || 0;
@@ -57,7 +55,6 @@ export class ReportsService {
       });
     });
     
-    // Convert the map to the array format needed for the report
     const itemsSold = Array.from(skuMap.entries()).map(([sku, totalQuantity]) => ({
       sku,
       totalQuantity,

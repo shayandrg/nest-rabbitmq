@@ -3,28 +3,28 @@ import { Document } from 'mongoose';
 
 export class InvoiceItem {
   @Prop({ required: true })
-  sku: string;
+    sku: string;
 
   @Prop({ required: true })
-  qt: number;
+    qt: number;
 }
 
 @Schema({ timestamps: true })
 export class Invoice extends Document {
   @Prop({ required: true })
-  customer: string;
+    customer: string;
 
   @Prop({ required: true })
-  amount: number;
+    amount: number;
 
   @Prop({ required: true })
-  reference: string;
+    reference: string;
 
   @Prop({ required: true, default: Date.now })
-  date: Date;
+    date: Date;
 
   @Prop({ type: [InvoiceItem], default: [] })
-  items: InvoiceItem[];
+    items: InvoiceItem[];
 }
 
 export const InvoiceSchema = SchemaFactory.createForClass(Invoice); 
